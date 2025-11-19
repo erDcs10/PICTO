@@ -5,5 +5,12 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+    <style name="Theme.PhotoFilterApp.Splashscreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/arlyde_yellow</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.PhotoFilterApp</item>
+    </style>
+
+
     <style name="Theme.PhotoFilterApp" parent="Base.Theme.PhotoFilterApp" />
 </resources>
