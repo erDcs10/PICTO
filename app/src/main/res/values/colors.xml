@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="theme_primary">#151515</color>
-    <color name="theme_onPrimary">#FCEC5E</color>
-    <color name="theme_surface">#E0C370</color>
-    <color name="theme_onSurface">#DFC370</color>
-    <color name="theme_background">#151515</color>
-    <color name="theme_onBackground">#DFC370</color>
-    <color name="theme_error">#DFC370</color>
-    <color name="theme_onError">#DFC370</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="red">#FFFF0000</color>
+    <color name="corn">#FCEC5E</color>
+    <color name="arlyde_yellow">#DFC370</color>
 </resources>

@@ -3,21 +3,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/home_nav"
-    app:startDestination="@id/homeFragment">
+    app:startDestination="@id/cameraFragment">
 
     <fragment
-        android:id="@+id/cartFragment"
-        android:name="id.ac.pnm.photofilterapp.home.CartFragment"
-        android:label="fragment_cart"
-        tools:layout="@layout/fragment_cart" />
+        android:id="@+id/cameraFragment"
+        android:name="id.ac.pnm.photofilterapp.home.CameraFragment"
+        android:label="Camera"
+        tools:layout="@layout/fragment_camera">
+        <action
+            android:id="@+id/action_camera_to_gallery"
+            app:destination="@id/galleryFragment" />
+    </fragment>
+
     <fragment
-        android:id="@+id/homeFragment"
-        android:name="id.ac.pnm.photofilterapp.home.HomeFragment"
-        android:label="fragment_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/galleryFragment"
+        android:name="id.ac.pnm.photofilterapp.home.GalleryFragment"
+        android:label="Gallery"
+        tools:layout="@layout/fragment_gallery">
+        <action
+            android:id="@+id/action_gallery_to_photoView"
+            app:destination="@id/photoViewFragment" />
+    </fragment>
+
     <fragment
-        android:id="@+id/profileFragment"
-        android:name="id.ac.pnm.photofilterapp.home.ProfileFragment"
-        android:label="fragment_profile"
-        tools:layout="@layout/fragment_profile" />
+        android:id="@+id/photoViewFragment"
+        android:name="id.ac.pnm.photofilterapp.home.PhotoViewFragment"
+        android:label="Photo View"
+        tools:layout="@layout/fragment_photo_view" />
 </navigation>
