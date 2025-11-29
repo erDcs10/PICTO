@@ -35,6 +35,7 @@ class CameraFragment : Fragment() {
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -63,8 +64,18 @@ class CameraFragment : Fragment() {
         }
 
         binding.imageCaptureButton.setOnClickListener { takePhoto() }
+        
         binding.galleryButton.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_gallery)
+        }
+
+        binding.switchCameraButton.setOnClickListener {
+            cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
+            startCamera()
         }
 
         updateGalleryThumbnail()
@@ -77,13 +88,11 @@ class CameraFragment : Fragment() {
     }
 
     private fun updateGalleryThumbnail() {
-        // Check internal app storage
         val files = requireContext().filesDir.listFiles { _, name ->
             name.endsWith(".jpg") || name.endsWith(".jpeg")
         }
 
         if (files != null && files.isNotEmpty()) {
-            // Sort by modification time to get the latest
             files.sortByDescending { it.lastModified() }
             val latestFile = files.first()
             
@@ -92,7 +101,6 @@ class CameraFragment : Fragment() {
                 transformations(CircleCropTransformation())
             }
         } else {
-            // Default icon if no internal images exist
             binding.galleryButton.load(R.drawable.ic_gallery) {
                 transformations(CircleCropTransformation())
             }
@@ -102,7 +110,6 @@ class CameraFragment : Fragment() {
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
-        // Create file in internal private storage
         val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
             .format(System.currentTimeMillis())
         val photoFile = File(requireContext().filesDir, "$name.jpg")
@@ -135,7 +142,7 @@ class CameraFragment : Fragment() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
                 imageCapture = ImageCapture.Builder().build()
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
             } catch(exc: Exception) {
