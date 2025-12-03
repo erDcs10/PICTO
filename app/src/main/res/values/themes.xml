@@ -1,16 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.PhotoFilterApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.PhotoFilterApp" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/corn</item>
+        <item name="colorOnPrimary">@color/black</item>
+        
+        <item name="android:colorBackground">@color/black</item>
+        <item name="colorOnBackground">@color/corn</item>
+        
+        <item name="colorSurface">@color/arlyde_yellow</item>
+        <item name="colorOnSurface">@color/black</item>
+        
+        <item name="colorError">@color/red</item>
+        <item name="colorOnError">@color/white</item>
     </style>
 
     <style name="Theme.PhotoFilterApp.Splashscreen" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/arlyde_yellow</item>
-        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="windowSplashScreenBackground">@color/corn</item>
+        <item name="windowSplashScreenAnimationDuration">100</item>
         <item name="postSplashScreenTheme">@style/Theme.PhotoFilterApp</item>
     </style>
-
 
     <style name="Theme.PhotoFilterApp" parent="Base.Theme.PhotoFilterApp" />
 </resources>
