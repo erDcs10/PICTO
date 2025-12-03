@@ -30,6 +30,7 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import coil.transform.CircleCropTransformation
 import id.ac.pnm.photofilterapp.R
+import id.ac.pnm.photofilterapp.adapter.CaptureButtonAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentCameraBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -72,7 +73,12 @@ class CameraFragment : Fragment() {
             requestPermissions()
         }
 
-        binding.imageCaptureButton.setOnClickListener { takePhoto() }
+        val adapter = CaptureButtonAdapter {
+
+            val isFiltered = binding.captureButtonPager.currentItem == 1
+            takePhoto(isFiltered)
+        }
+        binding.captureButtonPager.adapter = adapter
 
         binding.galleryButton.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_gallery)
@@ -120,7 +126,7 @@ class CameraFragment : Fragment() {
         }
     }
 
-    private fun takePhoto() {
+    private fun takePhoto(isFiltered: Boolean) {
         val imageCapture = imageCapture ?: return
 
         imageCapture.takePicture(
@@ -140,23 +146,30 @@ class CameraFragment : Fragment() {
                         val rotationDegrees = image.imageInfo.rotationDegrees
                         val rotatedBitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
 
-                        val filteredBitmap = applyAutumnFilter(rotatedBitmap)
+                        val finalBitmap = if (isFiltered) {
+                            applyAutumnFilter(rotatedBitmap)
+                        } else {
+                            rotatedBitmap
+                        }
 
-                        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                        val prefix = if (isFiltered) "Filtered" else "Normal"
+                        val name = "${prefix}_" + SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                             .format(System.currentTimeMillis())
                         val photoFile = File(requireContext().filesDir, "$name.jpg")
 
                         FileOutputStream(photoFile).use { out ->
-                            filteredBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
                         }
 
                         requireActivity().runOnUiThread {
-                            Toast.makeText(requireContext(), "Saved Autumn Photo!", Toast.LENGTH_SHORT).show()
+                            val toastMsg = if (isFiltered) "Saved Autumn Photo!" else "Saved Photo!"
+                            Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
                             updateGalleryThumbnail()
                         }
 
                         if (bitmap != rotatedBitmap) bitmap.recycle()
-                        if (rotatedBitmap != filteredBitmap) rotatedBitmap.recycle()
+                        if (rotatedBitmap != finalBitmap) rotatedBitmap.recycle()
+                        if (isFiltered) finalBitmap.recycle()
 
                     } catch (e: Exception) {
                         Log.e(TAG, "Processing failed", e)
