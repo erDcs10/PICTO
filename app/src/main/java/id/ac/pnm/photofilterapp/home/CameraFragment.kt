@@ -2,8 +2,12 @@ package id.ac.pnm.photofilterapp.home
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -22,8 +27,11 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import coil.transform.CircleCropTransformation
 import id.ac.pnm.photofilterapp.R
+import id.ac.pnm.photofilterapp.adapter.CaptureButtonAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentCameraBinding
+import id.ac.pnm.photofilterapp.filter.FilterManager
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -63,8 +71,14 @@ class CameraFragment : Fragment() {
             requestPermissions()
         }
 
-        binding.imageCaptureButton.setOnClickListener { takePhoto() }
-        
+        val adapter = CaptureButtonAdapter(FilterManager.filters) {
+            val currentItem = binding.captureButtonPager.currentItem
+            val selectedFilter = FilterManager.filters.getOrNull(currentItem)
+            
+            takePhoto(selectedFilter?.colorMatrix)
+        }
+        binding.captureButtonPager.adapter = adapter
+
         binding.galleryButton.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_gallery)
         }
@@ -96,41 +110,96 @@ class CameraFragment : Fragment() {
             files.sortByDescending { it.lastModified() }
             val latestFile = files.first()
             
-            binding.galleryButton.load(latestFile) {
-                crossfade(true)
-                transformations(CircleCropTransformation())
+            requireActivity().runOnUiThread {
+                binding.galleryButton.load(latestFile) {
+                    crossfade(true)
+                    transformations(CircleCropTransformation())
+                }
             }
         } else {
-            binding.galleryButton.load(R.drawable.ic_gallery) {
-                transformations(CircleCropTransformation())
+            requireActivity().runOnUiThread {
+                binding.galleryButton.load(R.drawable.ic_gallery) {
+                    transformations(CircleCropTransformation())
+                }
             }
         }
     }
 
-    private fun takePhoto() {
+    private fun takePhoto(filterMatrix: ColorMatrix?) {
         val imageCapture = imageCapture ?: return
 
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
-        val photoFile = File(requireContext().filesDir, "$name.jpg")
-
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
         imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
+            cameraExecutor,
+            object : ImageCapture.OnImageCapturedCallback() {
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                    Toast.makeText(requireContext(), "Capture Failed", Toast.LENGTH_SHORT).show()
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(requireContext(), "Capture Failed", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val msg = "Photo saved to App Gallery"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                    updateGalleryThumbnail()
+
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    try {
+                        val bitmap = image.toBitmap()
+                        
+                        val rotationDegrees = image.imageInfo.rotationDegrees
+                        val rotatedBitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
+
+                        val finalBitmap = if (filterMatrix != null) {
+                            applyFilter(rotatedBitmap, filterMatrix)
+                        } else {
+                            rotatedBitmap
+                        }
+
+                        val prefix = if (filterMatrix != null) "Filtered" else "Normal"
+                        val name = "${prefix}_" + SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                            .format(System.currentTimeMillis())
+                        val photoFile = File(requireContext().filesDir, "$name.jpg")
+                        
+                        FileOutputStream(photoFile).use { out ->
+                            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        }
+
+                        requireActivity().runOnUiThread {
+                            val toastMsg = if (filterMatrix != null) "Saved Filtered Photo!" else "Saved Photo!"
+                            Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
+                            updateGalleryThumbnail()
+                        }
+
+                        if (bitmap != rotatedBitmap) bitmap.recycle()
+                        if (rotatedBitmap != finalBitmap) rotatedBitmap.recycle()
+                        if (filterMatrix != null) finalBitmap.recycle()
+
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Processing failed", e)
+                    } finally {
+                        image.close()
+                    }
                 }
             }
         )
+    }
+
+    private fun rotateBitmap(source: Bitmap, angle: Float): Bitmap {
+        if (angle == 0f) return source
+        val matrix = Matrix()
+        matrix.postRotate(angle)
+        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+    }
+
+    private fun applyFilter(src: Bitmap, matrix: ColorMatrix): Bitmap {
+        val width = src.width
+        val height = src.height
+        
+        val dest = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(dest)
+        
+        val paint = Paint()
+        paint.colorFilter = ColorMatrixColorFilter(matrix)
+        
+        canvas.drawBitmap(src, 0f, 0f, paint)
+        
+        return dest
     }
 
     private fun startCamera() {
