@@ -8,10 +8,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -32,6 +29,7 @@ import coil.transform.CircleCropTransformation
 import id.ac.pnm.photofilterapp.R
 import id.ac.pnm.photofilterapp.adapter.CaptureButtonAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentCameraBinding
+import id.ac.pnm.photofilterapp.filter.FilterManager
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -73,10 +71,11 @@ class CameraFragment : Fragment() {
             requestPermissions()
         }
 
-        val adapter = CaptureButtonAdapter {
-
-            val isFiltered = binding.captureButtonPager.currentItem == 1
-            takePhoto(isFiltered)
+        val adapter = CaptureButtonAdapter(FilterManager.filters) {
+            val currentItem = binding.captureButtonPager.currentItem
+            val selectedFilter = FilterManager.filters.getOrNull(currentItem)
+            
+            takePhoto(selectedFilter?.colorMatrix)
         }
         binding.captureButtonPager.adapter = adapter
 
@@ -110,7 +109,7 @@ class CameraFragment : Fragment() {
         if (files != null && files.isNotEmpty()) {
             files.sortByDescending { it.lastModified() }
             val latestFile = files.first()
-
+            
             requireActivity().runOnUiThread {
                 binding.galleryButton.load(latestFile) {
                     crossfade(true)
@@ -126,7 +125,7 @@ class CameraFragment : Fragment() {
         }
     }
 
-    private fun takePhoto(isFiltered: Boolean) {
+    private fun takePhoto(filterMatrix: ColorMatrix?) {
         val imageCapture = imageCapture ?: return
 
         imageCapture.takePicture(
@@ -142,34 +141,34 @@ class CameraFragment : Fragment() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     try {
                         val bitmap = image.toBitmap()
-
+                        
                         val rotationDegrees = image.imageInfo.rotationDegrees
                         val rotatedBitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
 
-                        val finalBitmap = if (isFiltered) {
-                            applyAutumnFilter(rotatedBitmap)
+                        val finalBitmap = if (filterMatrix != null) {
+                            applyFilter(rotatedBitmap, filterMatrix)
                         } else {
                             rotatedBitmap
                         }
 
-                        val prefix = if (isFiltered) "Filtered" else "Normal"
+                        val prefix = if (filterMatrix != null) "Filtered" else "Normal"
                         val name = "${prefix}_" + SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                             .format(System.currentTimeMillis())
                         val photoFile = File(requireContext().filesDir, "$name.jpg")
-
+                        
                         FileOutputStream(photoFile).use { out ->
                             finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
                         }
 
                         requireActivity().runOnUiThread {
-                            val toastMsg = if (isFiltered) "Saved Autumn Photo!" else "Saved Photo!"
+                            val toastMsg = if (filterMatrix != null) "Saved Filtered Photo!" else "Saved Photo!"
                             Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
                             updateGalleryThumbnail()
                         }
 
                         if (bitmap != rotatedBitmap) bitmap.recycle()
                         if (rotatedBitmap != finalBitmap) rotatedBitmap.recycle()
-                        if (isFiltered) finalBitmap.recycle()
+                        if (filterMatrix != null) finalBitmap.recycle()
 
                     } catch (e: Exception) {
                         Log.e(TAG, "Processing failed", e)
@@ -188,30 +187,18 @@ class CameraFragment : Fragment() {
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
-    private fun applyAutumnFilter(src: Bitmap): Bitmap {
+    private fun applyFilter(src: Bitmap, matrix: ColorMatrix): Bitmap {
         val width = src.width
         val height = src.height
-
+        
         val dest = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(dest)
-
-        val colorMatrix = ColorMatrix()
-
-        val rScale = 1.3f
-        val gScale = 1.1f
-        val bScale = 0.9f
-
-        colorMatrix.setScale(rScale, gScale, bScale, 1f)
-
-        val saturationMatrix = ColorMatrix()
-        saturationMatrix.setSaturation(1.2f)
-        colorMatrix.postConcat(saturationMatrix)
-
+        
         val paint = Paint()
-        paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
-
+        paint.colorFilter = ColorMatrixColorFilter(matrix)
+        
         canvas.drawBitmap(src, 0f, 0f, paint)
-
+        
         return dest
     }
 
@@ -224,7 +211,7 @@ class CameraFragment : Fragment() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
                 imageCapture = ImageCapture.Builder().build()
-
+                
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
             } catch(exc: Exception) {
