@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -141,9 +142,17 @@ class CameraFragment : Fragment() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     try {
                         val bitmap = image.toBitmap()
-                        
                         val rotationDegrees = image.imageInfo.rotationDegrees
-                        val rotatedBitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
+
+                        // --- CHANGED CODE START ---
+
+                        // Check if we are currently using the Front Camera
+                        val isFrontCamera = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
+
+                        // Pass the 'isFrontCamera' boolean to our new helper function
+                        val rotatedBitmap = rotateAndFlipBitmap(bitmap, rotationDegrees.toFloat(), isFrontCamera)
+
+                        // --- CHANGED CODE END ---
 
                         val finalBitmap = if (filterMatrix != null) {
                             applyFilter(rotatedBitmap, filterMatrix)
@@ -155,7 +164,7 @@ class CameraFragment : Fragment() {
                         val name = "${prefix}_" + SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                             .format(System.currentTimeMillis())
                         val photoFile = File(requireContext().filesDir, "$name.jpg")
-                        
+
                         FileOutputStream(photoFile).use { out ->
                             finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
                         }
@@ -180,10 +189,20 @@ class CameraFragment : Fragment() {
         )
     }
 
-    private fun rotateBitmap(source: Bitmap, angle: Float): Bitmap {
-        if (angle == 0f) return source
+    private fun rotateAndFlipBitmap(source: Bitmap, angle: Float, flipHorizontal: Boolean): Bitmap {
+        // If no rotation and no flip is needed, return the original
+        if (angle == 0f && !flipHorizontal) return source
+
         val matrix = Matrix()
+
+        // 1. Rotate the image first
         matrix.postRotate(angle)
+
+        // 2. If it's the front camera, mirror it (Flip Horizontal)
+        if (flipHorizontal) {
+            matrix.postScale(-1f, 1f)
+        }
+
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
@@ -207,10 +226,12 @@ class CameraFragment : Fragment() {
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
+                val preview = Preview.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3) // Force 4:3 (Standard Wide)
+                    .build().also {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
-                imageCapture = ImageCapture.Builder().build()
+                imageCapture = ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                    .build()
                 
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
