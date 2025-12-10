@@ -6,6 +6,41 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
+    <LinearLayout
+        android:id="@+id/controls_layout_top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="#80000000"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arrow_left"
+            app:tint="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <ImageButton
+            android:id="@+id/btn_trash"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/trash"
+            app:tint="@color/red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </LinearLayout>
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
@@ -23,40 +58,45 @@
         android:background="#80000000"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_share"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Share"
-            android:textColor="@color/black"
-            android:backgroundTint="@color/white"
-            android:layout_marginEnd="8dp"/>
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_share"
+            app:tint="@android:color/white"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_download"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Save"
-            android:textColor="@color/black"
-            android:backgroundTint="@color/corn"
-            android:layout_marginEnd="8dp"/>
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_download"
+            app:tint="@android:color/white"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_crop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Crop"
-            android:textColor="@color/black"
-            android:backgroundTint="@color/white"
-            android:layout_marginEnd="8dp"/>
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_crop"
+            app:tint="@android:color/white"/>
 
-        <Button
-            android:id="@+id/btn_delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Del"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/red"/>
+        <ImageButton
+            android:id="@+id/btn_filter"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_sliders"
+            app:tint="@android:color/white"/>
 
     </LinearLayout>
 
