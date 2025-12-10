@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.ucrop)
 
     implementation("jp.co.cyberagent.android:gpuimage:2.1.0")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 
     val camerax_version = "1.5.1"
     implementation("androidx.camera:camera-core:${camerax_version}")

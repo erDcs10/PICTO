@@ -12,13 +12,35 @@
         android:id="@+id/viewFinder"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="3:4"
         app:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" >
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    </androidx.camera.view.PreviewView>
+    <ImageView
+        android:id="@+id/ivFrame1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/camera_frame_black_01"
+        android:scaleType="fitXY"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintTop_toTopOf="@id/viewFinder"
+        app:layout_constraintBottom_toBottomOf="@id/viewFinder"
+        app:layout_constraintStart_toStartOf="@id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@id/viewFinder" />
+
+    <ProgressBar
+        android:id="@+id/loadingProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminateTint="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/ivFrame"
@@ -33,14 +55,20 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/capture_button_pager"
+    <ImageButton
+        android:id="@+id/button_shutter"
+        android:src="@drawable/button_shutter_03_03"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleType="fitXY"
         android:layout_width="120dp"
-        android:layout_height="100dp"
+        android:layout_height="125dp"
         android:layout_marginBottom="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 
     <ImageButton
         android:id="@+id/gallery_button"
@@ -50,9 +78,10 @@
         android:background="@android:color/transparent"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_gallery"
-        app:layout_constraintBottom_toBottomOf="@id/capture_button_pager"
-        app:layout_constraintTop_toTopOf="@id/capture_button_pager"
-        app:layout_constraintStart_toEndOf="@id/capture_button_pager" />
+        app:layout_constraintBottom_toBottomOf="@id/button_shutter"
+        app:layout_constraintTop_toTopOf="@id/button_shutter"
+        app:layout_constraintStart_toEndOf="@id/button_shutter" />
+
 
     <ImageButton
         android:id="@+id/switch_camera_button"
@@ -63,17 +92,30 @@
         android:scaleType="fitCenter"
         android:src="@drawable/ic_switch_camera"
         app:tint="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="@id/capture_button_pager"
-        app:layout_constraintTop_toTopOf="@id/capture_button_pager"
-        app:layout_constraintEnd_toStartOf="@id/capture_button_pager" />
+        app:layout_constraintBottom_toBottomOf="@id/button_shutter"
+        app:layout_constraintTop_toTopOf="@id/button_shutter"
+        app:layout_constraintEnd_toStartOf="@id/button_shutter" />
 
     <View
         android:id="@+id/shutterFlashView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFF"
+        android:background="@color/black"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFilterSidebar"
+        android:layout_width="80dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="100dp"
+        android:background="#66000000"
+        android:paddingTop="10dp"
+        android:clipToPadding="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
