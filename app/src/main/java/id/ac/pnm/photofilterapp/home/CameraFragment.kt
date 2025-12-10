@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.media.MediaActionSound
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
@@ -21,6 +22,8 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -42,6 +45,7 @@ class CameraFragment : Fragment() {
     private var _binding: FragmentCameraBinding? = null
     private val binding get() = _binding!!
 
+    private val shutterSound = MediaActionSound()
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -75,7 +79,7 @@ class CameraFragment : Fragment() {
         val adapter = CaptureButtonAdapter(FilterManager.filters) {
             val currentItem = binding.captureButtonPager.currentItem
             val selectedFilter = FilterManager.filters.getOrNull(currentItem)
-            
+
             takePhoto(selectedFilter?.colorMatrix)
         }
         binding.captureButtonPager.adapter = adapter
@@ -91,6 +95,11 @@ class CameraFragment : Fragment() {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
             startCamera()
+        }
+
+        binding.captureButtonPager.setOnClickListener {
+            triggerShutterEffect()
+            // saveImageToGallery()
         }
 
         updateGalleryThumbnail()
@@ -144,15 +153,9 @@ class CameraFragment : Fragment() {
                         val bitmap = image.toBitmap()
                         val rotationDegrees = image.imageInfo.rotationDegrees
 
-                        // --- CHANGED CODE START ---
-
-                        // Check if we are currently using the Front Camera
                         val isFrontCamera = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
 
-                        // Pass the 'isFrontCamera' boolean to our new helper function
                         val rotatedBitmap = rotateAndFlipBitmap(bitmap, rotationDegrees.toFloat(), isFrontCamera)
-
-                        // --- CHANGED CODE END ---
 
                         val finalBitmap = if (filterMatrix != null) {
                             applyFilter(rotatedBitmap, filterMatrix)
@@ -206,6 +209,24 @@ class CameraFragment : Fragment() {
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
+    private fun triggerShutterEffect() {
+        // 4. Access the view directly through binding
+        // Assuming the ID in XML is android:id="@+id/shutterFlashView"
+        binding.shutterFlashView.apply {
+            // Make visible and white
+            visibility = View.VISIBLE
+            alpha = 1f
+
+            // Animate fade out
+            animate()
+                .alpha(0f)
+                .setDuration(100)
+                .withEndAction {
+                    visibility = View.GONE
+                }
+                .start()
+        }
+    }
     private fun applyFilter(src: Bitmap, matrix: ColorMatrix): Bitmap {
         val width = src.width
         val height = src.height
@@ -226,11 +247,28 @@ class CameraFragment : Fragment() {
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3) // Force 4:3 (Standard Wide)
+                val preview = Preview.Builder()
+                    .setResolutionSelector(
+                        ResolutionSelector.Builder()
+                            .setAspectRatioStrategy(
+                                AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+                            )
+                            .build()
+                    )
                     .build().also {
-                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-                }
-                imageCapture = ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                        it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                    }
+                /*imageCapture = ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                    .build()*/
+                imageCapture = ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .setResolutionSelector(
+                        ResolutionSelector.Builder()
+                            .setAspectRatioStrategy(
+                                AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+                            )
+                            .build()
+                    )
                     .build()
                 
                 cameraProvider.unbindAll()

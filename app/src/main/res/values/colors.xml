@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <color name="black">#151515</color>
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FFFF0000</color>
     <color name="corn">#FCEC5E</color>
     <color name="arlyde_yellow">#DFC370</color>
+    <color name="jet_black">#2A2B2A</color>
 </resources>
