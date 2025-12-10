@@ -8,15 +8,14 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.media.MediaActionSound
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import android.media.MediaActionSound
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -31,9 +30,7 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import coil.transform.CircleCropTransformation
 import id.ac.pnm.photofilterapp.R
-import id.ac.pnm.photofilterapp.adapter.CaptureButtonAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentCameraBinding
-import id.ac.pnm.photofilterapp.filter.FilterManager
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -76,13 +73,10 @@ class CameraFragment : Fragment() {
             requestPermissions()
         }
 
-        val adapter = CaptureButtonAdapter(FilterManager.filters) {
-            val currentItem = binding.captureButtonPager.currentItem
-            val selectedFilter = FilterManager.filters.getOrNull(currentItem)
-
-            takePhoto(selectedFilter?.colorMatrix)
+        binding.captureButton.setOnClickListener {
+            triggerShutterEffect()
+            takePhoto(null)
         }
-        binding.captureButtonPager.adapter = adapter
 
         binding.galleryButton.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_gallery)
@@ -95,11 +89,6 @@ class CameraFragment : Fragment() {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
             startCamera()
-        }
-
-        binding.captureButtonPager.setOnClickListener {
-            triggerShutterEffect()
-            // saveImageToGallery()
         }
 
         updateGalleryThumbnail()
@@ -193,15 +182,12 @@ class CameraFragment : Fragment() {
     }
 
     private fun rotateAndFlipBitmap(source: Bitmap, angle: Float, flipHorizontal: Boolean): Bitmap {
-        // If no rotation and no flip is needed, return the original
         if (angle == 0f && !flipHorizontal) return source
 
         val matrix = Matrix()
 
-        // 1. Rotate the image first
         matrix.postRotate(angle)
 
-        // 2. If it's the front camera, mirror it (Flip Horizontal)
         if (flipHorizontal) {
             matrix.postScale(-1f, 1f)
         }
@@ -210,14 +196,10 @@ class CameraFragment : Fragment() {
     }
 
     private fun triggerShutterEffect() {
-        // 4. Access the view directly through binding
-        // Assuming the ID in XML is android:id="@+id/shutterFlashView"
         binding.shutterFlashView.apply {
-            // Make visible and white
             visibility = View.VISIBLE
             alpha = 1f
 
-            // Animate fade out
             animate()
                 .alpha(0f)
                 .setDuration(100)
@@ -258,8 +240,7 @@ class CameraFragment : Fragment() {
                     .build().also {
                         it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                     }
-                /*imageCapture = ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                    .build()*/
+                
                 imageCapture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .setResolutionSelector(

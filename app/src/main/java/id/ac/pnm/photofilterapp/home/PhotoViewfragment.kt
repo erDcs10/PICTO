@@ -72,6 +72,10 @@ class PhotoViewFragment : Fragment() {
             }
         }
 
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
         binding.btnShare.setOnClickListener {
             val currentUri = getCurrentUri() ?: return@setOnClickListener
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -87,7 +91,7 @@ class PhotoViewFragment : Fragment() {
             saveToPublicGallery(currentUri)
         }
 
-        binding.btnDelete.setOnClickListener {
+        binding.btnTrash.setOnClickListener {
             val currentUri = getCurrentUri() ?: return@setOnClickListener
             try {
                 val file = File(currentUri.path!!)
