@@ -2,13 +2,13 @@ package id.ac.pnm.photofilterapp.home
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.media.MediaActionSound
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,7 +30,10 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import coil.transform.CircleCropTransformation
 import id.ac.pnm.photofilterapp.R
+import id.ac.pnm.photofilterapp.adapter.FilterSidebarAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentCameraBinding
+import id.ac.pnm.photofilterapp.filter.FilterConfig
+import id.ac.pnm.photofilterapp.filter.FilterManager
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -42,10 +45,12 @@ class CameraFragment : Fragment() {
     private var _binding: FragmentCameraBinding? = null
     private val binding get() = _binding!!
 
-    private val shutterSound = MediaActionSound()
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+    private var isSidebarOpen = false
+    private var currentFilter: FilterConfig? = null
 
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -73,9 +78,15 @@ class CameraFragment : Fragment() {
             requestPermissions()
         }
 
+        setupSidebar()
+
         binding.captureButton.setOnClickListener {
             triggerShutterEffect()
-            takePhoto(null)
+            takePhoto(currentFilter?.colorMatrix)
+        }
+
+        binding.btnFilter.setOnClickListener {
+            toggleSidebar()
         }
 
         binding.galleryButton.setOnClickListener {
@@ -95,6 +106,31 @@ class CameraFragment : Fragment() {
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
+    private fun setupSidebar() {
+
+        binding.rvFilters.post {
+            binding.rvFilters.translationX = binding.rvFilters.width.toFloat()
+        }
+
+        val adapter = FilterSidebarAdapter(FilterManager.filters) { filter ->
+            currentFilter = filter
+
+            val color = ContextCompat.getColor(requireContext(), filter.buttonColorRes)
+            binding.captureButton.backgroundTintList = ColorStateList.valueOf(color)
+        }
+        binding.rvFilters.adapter = adapter
+    }
+
+    private fun toggleSidebar() {
+        isSidebarOpen = !isSidebarOpen
+        val translationX = if (isSidebarOpen) 0f else binding.rvFilters.width.toFloat()
+
+        binding.rvFilters.animate()
+            .translationX(translationX)
+            .setDuration(300)
+            .start()
+    }
+
     override fun onResume() {
         super.onResume()
         updateGalleryThumbnail()
@@ -108,7 +144,7 @@ class CameraFragment : Fragment() {
         if (files != null && files.isNotEmpty()) {
             files.sortByDescending { it.lastModified() }
             val latestFile = files.first()
-            
+
             requireActivity().runOnUiThread {
                 binding.galleryButton.load(latestFile) {
                     crossfade(true)
@@ -141,7 +177,6 @@ class CameraFragment : Fragment() {
                     try {
                         val bitmap = image.toBitmap()
                         val rotationDegrees = image.imageInfo.rotationDegrees
-
                         val isFrontCamera = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
 
                         val rotatedBitmap = rotateAndFlipBitmap(bitmap, rotationDegrees.toFloat(), isFrontCamera)
@@ -183,15 +218,11 @@ class CameraFragment : Fragment() {
 
     private fun rotateAndFlipBitmap(source: Bitmap, angle: Float, flipHorizontal: Boolean): Bitmap {
         if (angle == 0f && !flipHorizontal) return source
-
         val matrix = Matrix()
-
         matrix.postRotate(angle)
-
         if (flipHorizontal) {
             matrix.postScale(-1f, 1f)
         }
-
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
@@ -199,28 +230,22 @@ class CameraFragment : Fragment() {
         binding.shutterFlashView.apply {
             visibility = View.VISIBLE
             alpha = 1f
-
             animate()
                 .alpha(0f)
                 .setDuration(100)
-                .withEndAction {
-                    visibility = View.GONE
-                }
+                .withEndAction { visibility = View.GONE }
                 .start()
         }
     }
+
     private fun applyFilter(src: Bitmap, matrix: ColorMatrix): Bitmap {
         val width = src.width
         val height = src.height
-        
         val dest = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(dest)
-        
         val paint = Paint()
         paint.colorFilter = ColorMatrixColorFilter(matrix)
-        
         canvas.drawBitmap(src, 0f, 0f, paint)
-        
         return dest
     }
 
@@ -232,26 +257,22 @@ class CameraFragment : Fragment() {
                 val preview = Preview.Builder()
                     .setResolutionSelector(
                         ResolutionSelector.Builder()
-                            .setAspectRatioStrategy(
-                                AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
-                            )
+                            .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                             .build()
                     )
                     .build().also {
                         it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                     }
-                
+
                 imageCapture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .setResolutionSelector(
                         ResolutionSelector.Builder()
-                            .setAspectRatioStrategy(
-                                AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
-                            )
+                            .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                             .build()
                     )
                     .build()
-                
+
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
             } catch(exc: Exception) {
