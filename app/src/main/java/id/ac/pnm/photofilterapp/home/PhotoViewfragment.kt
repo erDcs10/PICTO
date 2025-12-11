@@ -140,13 +140,11 @@ class PhotoViewFragment : Fragment() {
         }
 
         binding.btnFilter.setOnClickListener {
-            // 1. Get the URI of the image currently visible on screen
             val currentImageUri = getCurrentUri()
 
             if (currentImageUri != null) {
                 val bundle = Bundle().apply {
-                    // 2. FIX: Key must be "photoUri" to match your navigation XML
-                    // 3. FIX: Pass currentImageUri.toString(), NOT the old 'uri' variable
+
                     putString("photoUri", currentImageUri.toString())
                 }
 

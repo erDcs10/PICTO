@@ -158,7 +158,7 @@ class CameraFragment : Fragment() {
     }
 
     private fun processCapturedImage(image: ImageProxy, filterIndex: Int) {
-        // Safe context for background thread
+        // Konteks aman untuk background thread
         val appContext = context?.applicationContext ?: return
 
         try {
@@ -232,10 +232,7 @@ class CameraFragment : Fragment() {
         }
     }
 
-    /**
-     * UPDATED FUNCTION: Now accepts 'GPUImageFilter' instead of 'ColorMatrix'.
-     * This makes it compatible with VintageFilter AND Matrix filters.
-     */
+
     private fun applyGpuImage(context: Context, src: Bitmap, filter: GPUImageFilter): Bitmap {
         val gpuImage = GPUImage(context)
         gpuImage.setImage(src)
@@ -243,7 +240,6 @@ class CameraFragment : Fragment() {
         return gpuImage.bitmapWithFilterApplied
     }
 
-    // --- FIX ENDS HERE ---
 
     private fun rotateAndFlipBitmap(source: Bitmap, angle: Float, flipHorizontal: Boolean): Bitmap {
         val matrix = Matrix()
