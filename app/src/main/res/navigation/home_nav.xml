@@ -29,5 +29,20 @@
         android:id="@+id/photoViewFragment"
         android:name="id.ac.pnm.photofilterapp.home.PhotoViewFragment"
         android:label="Photo View"
-        tools:layout="@layout/fragment_photo_view" />
+        tools:layout="@layout/fragment_photo_view" >
+        <action
+            android:id="@+id/action_photoViewFragment_to_photoEditFragment"
+            app:destination="@id/photoEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/photoEditFragment"
+        android:name="id.ac.pnm.photofilterapp.home.PhotoEditFragment"
+        android:label="Edit Photo"
+        tools:layout="@layout/fragment_photo_editor">
+
+        <argument
+            android:name="photoUri"
+            app:argType="string" />
+    </fragment>
 </navigation>
