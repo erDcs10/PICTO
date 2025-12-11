@@ -156,6 +156,17 @@ class PhotoViewFragment : Fragment() {
                 Toast.makeText(requireContext(), "Error: No image selected", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.btnDownload.setOnClickListener {
+            val currentUri = getCurrentUri()
+
+            if (currentUri != null) {
+                // 2. Call your existing helper function
+                saveToPublicGallery(currentUri)
+            } else {
+                Toast.makeText(requireContext(), "Error: No image selected", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun loadInternalImages() {
