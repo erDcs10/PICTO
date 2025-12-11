@@ -83,6 +83,9 @@ class CameraFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        binding.rvFilterSidebar.visibility = View.GONE
+        binding.rvFilterSidebar.translationX = 100f
+
         if (allPermissionsGranted()) startCamera()
         else requestPermissions()
 
@@ -101,6 +104,16 @@ class CameraFragment : Fragment() {
         binding.rvFilterSidebar.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = filterAdapter
+        }
+
+        binding.btnFilterMenu.setOnClickListener {
+            toggleSidebar()
+        }
+
+        binding.viewFinder.setOnClickListener {
+            if (binding.rvFilterSidebar.visibility == View.VISIBLE) {
+                toggleSidebar()
+            }
         }
 
         binding.buttonShutter.setOnClickListener {
@@ -165,20 +178,23 @@ class CameraFragment : Fragment() {
 
             // 3. DECIDE WHICH FILTER TO USE
             // Here we convert the ColorMatrix to a GPUFilter, OR use your custom one.
-            val filterToApply: GPUImageFilter = when (filterIndex) {
-                0 -> GPUImageColorMatrixFilter(1.0f, ColorMatrix().array)
-                1 -> VintageFilter()
-                2 -> ColdFilter()
-                3 -> WarmFilter()
-                4 -> RetroSepiaFilter()
-                5 -> createDramaticFilter()
-                else -> GPUImageColorMatrixFilter(1.0f, ColorMatrix().array)
+            val filteredBitmap = if (filterIndex == 0) {
+                // OPTIMIZATION: If "Normal" is selected, SKIP the GPU entirely.
+                // This guarantees the original colors and saves processing time.
+                rotatedBitmap
+            } else {
+                val filterToApply: GPUImageFilter = when (filterIndex) {
+                    0 -> GPUImageColorMatrixFilter(1.0f, ColorMatrix().array)
+                    1 -> VintageFilter()
+                    2 -> ColdFilter()
+                    3 -> WarmFilter()
+                    4 -> RetroSepiaFilter()
+                    5 -> createDramaticFilter()
+                    else -> GPUImageColorMatrixFilter(1.0f, ColorMatrix().array)
+                }
+                applyGpuImage(appContext, rotatedBitmap, filterToApply)
             }
-
-            // 4. Apply the Filter (Generic function)
-            val filteredBitmap = applyGpuImage(appContext, rotatedBitmap, filterToApply)
-
-            // 5. Merge Frame (UI Thread needed for View Cache)
+            
             var frameBitmap: Bitmap? = null
             val latch = java.util.concurrent.CountDownLatch(1)
 
@@ -322,6 +338,34 @@ class CameraFragment : Fragment() {
             alpha = 1f
             animate().alpha(0f).setDuration(100)
                 .withEndAction { visibility = View.GONE }
+                .start()
+        }
+    }
+
+    private fun toggleSidebar() {
+        val sidebar = binding.rvFilterSidebar
+        val isVisible = sidebar.visibility == View.VISIBLE
+
+        if (isVisible) {
+            // HIDE: Slide out to the right -> Then set GONE
+            sidebar.animate()
+                .translationX(sidebar.width.toFloat()) // Move right
+                .alpha(0f) // Fade out
+                .setDuration(300)
+                .withEndAction {
+                    sidebar.visibility = View.GONE
+                }
+                .start()
+        } else {
+            // SHOW: Set VISIBLE -> Slide in from right
+            sidebar.visibility = View.VISIBLE
+            sidebar.translationX = sidebar.width.toFloat() // Start off-screen
+            sidebar.alpha = 0f
+
+            sidebar.animate()
+                .translationX(0f) // Move to position
+                .alpha(1f) // Fade in
+                .setDuration(300)
                 .start()
         }
     }

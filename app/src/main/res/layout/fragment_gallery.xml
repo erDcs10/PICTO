@@ -11,11 +11,11 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/corn"
+        android:background="@color/jet_black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:title="Gallery"
-        app:titleTextColor="@color/black">
+        app:titleTextColor="@color/corn">
 
         <ImageButton
             android:id="@+id/importButton"
@@ -26,7 +26,7 @@
             android:src="@drawable/ic_camera_plus"
             android:layout_gravity="end|center_vertical"
             android:layout_marginEnd="20dp"
-            app:tint="@android:color/black" />
+            app:tint="@android:color/primary_text_dark" />
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView

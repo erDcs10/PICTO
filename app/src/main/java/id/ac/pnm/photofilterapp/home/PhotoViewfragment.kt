@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.yalantis.ucrop.UCrop
+import id.ac.pnm.photofilterapp.R
 import id.ac.pnm.photofilterapp.adapter.PhotoPagerAdapter
 import id.ac.pnm.photofilterapp.databinding.FragmentPhotoViewBinding
 import java.io.File
@@ -27,6 +28,8 @@ class PhotoViewFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var pagerAdapter: PhotoPagerAdapter
     private var imageList = mutableListOf<Uri>()
+
+    private val uri = arguments?.getString("photoUri") ?: ""
 
     private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -73,18 +76,38 @@ class PhotoViewFragment : Fragment() {
         }
 
         binding.btnShare.setOnClickListener {
-            val currentUri = getCurrentUri() ?: return@setOnClickListener
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_STREAM, currentUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            startActivity(Intent.createChooser(shareIntent, "Share Image"))
-        }
+            // 1. Get the URI from your list
+            val currentUri = getCurrentUri()
 
-        binding.btnDownload.setOnClickListener {
-            val currentUri = getCurrentUri() ?: return@setOnClickListener
-            saveToPublicGallery(currentUri)
+            if (currentUri == null) {
+                Toast.makeText(requireContext(), "Message", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            try {
+                val shareUri: Uri = if (currentUri.scheme == "file") {
+                    val file = java.io.File(currentUri.path!!)
+                    androidx.core.content.FileProvider.getUriForFile(
+                        requireContext(),
+                        "${requireContext().packageName}.provider", // Use requireContext().packageName
+                        file
+                    )
+                } else {
+                    currentUri
+                }
+
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/jpeg" // Or "image/*" to be safe
+                    putExtra(Intent.EXTRA_STREAM, shareUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+
+                startActivity(Intent.createChooser(shareIntent, "Share Image"))
+
+            } catch (e: IllegalArgumentException) {
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "Message", Toast.LENGTH_SHORT).show()
+            }
         }
 
         binding.btnDelete.setOnClickListener {
@@ -114,6 +137,24 @@ class PhotoViewFragment : Fragment() {
             val uCrop = UCrop.of(currentUri, destUri)
             val intent = uCrop.getIntent(requireContext())
             cropLauncher.launch(intent)
+        }
+
+        binding.btnFilter.setOnClickListener {
+            // 1. Get the URI of the image currently visible on screen
+            val currentImageUri = getCurrentUri()
+
+            if (currentImageUri != null) {
+                val bundle = Bundle().apply {
+                    // 2. FIX: Key must be "photoUri" to match your navigation XML
+                    // 3. FIX: Pass currentImageUri.toString(), NOT the old 'uri' variable
+                    putString("photoUri", currentImageUri.toString())
+                }
+
+                // Navigate
+                findNavController().navigate(R.id.action_photoViewFragment_to_photoEditFragment, bundle)
+            } else {
+                Toast.makeText(requireContext(), "Error: No image selected", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
