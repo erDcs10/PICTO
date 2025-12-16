@@ -1,9 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.PhotoFilterApp" parent="Theme.Material3.Light.NoActionBar">
-        <item name="colorPrimary">@color/corn</item>
-        <item name="colorOnPrimary">@color/black</item>
+
+        <item name="android:fontFamily">@font/my_font</item>
+        <item name="fontFamily">@font/my_font </item>
+
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/arlyde_yellow</item>
         
-        <item name="android:colorBackground">@color/black</item>
+        <item name="android:colorBackground">@color/jet_black</item>
         <item name="colorOnBackground">@color/corn</item>
         
         <item name="colorSurface">@color/arlyde_yellow</item>
@@ -14,7 +18,7 @@
     </style>
 
     <style name="Theme.PhotoFilterApp.Splashscreen" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/corn</item>
+        <item name="windowSplashScreenBackground">@color/black</item>
         <item name="windowSplashScreenAnimationDuration">100</item>
         <item name="postSplashScreenTheme">@style/Theme.PhotoFilterApp</item>
     </style>
