@@ -8,11 +8,11 @@
     <item
         android:id="@+id/galleryFragment"
         android:title="Gallery"
-        android:icon="@drawable/camera_12" />
+        android:icon="@drawable/ic_gallery" />
 
     <item
         android:id="@+id/photoViewFragment"
-        android:title="Import"
+        android:title="SlideShow"
         android:icon="@drawable/baseline_man_24" />
 
 </menu>
